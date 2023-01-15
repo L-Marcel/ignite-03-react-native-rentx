@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "ignite-03-react-native-rentx",
+    "slug": "ignite-03-react-native-rentx",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
