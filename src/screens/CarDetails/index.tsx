@@ -19,22 +19,27 @@ import {
 import { ImageSlider } from "../../components/ImageSlider";
 import { Accessory } from "../../components/Accessory/index";
 
-import speedSvg from "../../assets/speed.svg";
-import accelerationSvg from "../../assets/acceleration.svg";
-import forceSvg from "../../assets/force.svg";
-import gasolineSvg from "../../assets/gasoline.svg";
-import exchangeSvg from "../../assets/exchange.svg";
-import peopleSvg from "../../assets/people.svg";
 import { Button } from "../../components/Button";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { CarType } from "../../components/Car/index";
+import { getAccessoryIcon } from "../../utils/getAccessoryIcon";
 
 interface CarDetailsProps {}
 
 export function CarDetails({}: CarDetailsProps) {
   const { navigate } = useNavigation();
+  const route = useRoute();
+  const { car } = route.params as {
+    car: CarType;
+  };
 
   function handleNavigateToScheduling() {
-    navigate("Scheduling" as never);
+    navigate(
+      "Scheduling" as never,
+      {
+        car,
+      } as never
+    );
   }
 
   function handleNavigateToHome() {
@@ -49,39 +54,29 @@ export function CarDetails({}: CarDetailsProps) {
       </Header>
 
       <CarImages>
-        <ImageSlider
-          imagesUrl={[
-            "https://www.pngarts.com/files/3/White-Audi-PNG-Background-Image.png",
-          ]}
-        />
+        <ImageSlider imagesUrl={car.photos} />
       </CarImages>
 
       <Content>
         <Details>
           <Description>
-            <Brand>Lamborghini</Brand>
-            <Name>Huracan</Name>
+            <Brand>{car.brand}</Brand>
+            <Name>{car.name}</Name>
           </Description>
 
           <Rent>
-            <Period>Ao dia</Period>
-            <Price>R$ 580</Price>
+            <Period>{car.rent.period}</Period>
+            <Price>R$ {car.rent.price}</Price>
           </Rent>
         </Details>
 
         <Accessories>
-          <Accessory name="300Hm/h" icon={speedSvg} />
-          <Accessory name="3.2s" icon={accelerationSvg} />
-          <Accessory name="800 HP" icon={forceSvg} />
-          <Accessory name="Gasolina" icon={gasolineSvg} />
-          <Accessory name="Auto" icon={exchangeSvg} />
-          <Accessory name="2 pessoas" icon={peopleSvg} />
+          {car.accessories.map(({ name, type }) => {
+            return <Accessory key={type} name={name} icon={getAccessoryIcon(type)} />;
+          })}
         </Accessories>
 
-        <About>
-          Este é automóvel desportivo. Surgiu do lendário touro de lide indultado na praça
-          Real Maestranza de Sevilla. É um belíssimo carro para quem gosta de acelerar.
-        </About>
+        <About>{car.about}</About>
       </Content>
 
       <Footer>

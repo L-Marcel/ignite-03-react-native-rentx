@@ -14,6 +14,8 @@ import { SchedulingComplete } from "./src/screens/SchedulingComplete";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { OrientationLock } from "expo-screen-orientation/build/ScreenOrientation.types";
 import { Routes } from "./src/routes/index";
+import { QueryClientProvider } from "react-query";
+import { queryClient } from "./src/services/query";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,7 +42,9 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <ThemeProvider theme={theme}>
-        <Routes />
+        <QueryClientProvider client={queryClient}>
+          <Routes />
+        </QueryClientProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

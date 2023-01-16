@@ -1,29 +1,59 @@
-import { Container, Header, TotalCars, HeaderContent, CarList } from "./styles";
+import {
+  Container,
+  Header,
+  TotalCars,
+  HeaderContent,
+  CarList,
+  MyCarsButton,
+} from "./styles";
 import { StatusBar } from "expo-status-bar";
 import Logo from "../../assets/logo.svg";
 import { RFValue } from "react-native-responsive-fontsize";
 import { Car, CarType } from "../../components/Car";
 import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "react-query";
+import { api } from "../../services/api";
+import { useRefreshOnFocus } from "../../context/hooks/useRefreshOnFocus";
+import { Load } from "../../components/Load/index";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "styled-components/native";
 
 interface HomeProps {}
 
 export function Home({}: HomeProps) {
+  const theme = useTheme();
   const { navigate } = useNavigation();
+  const {
+    data: cars,
+    refetch,
+    isFetching,
+  } = useQuery(
+    "cars",
+    async () => {
+      return await api.get<CarType[]>("/cars").then((res) => {
+        return res.data;
+      });
+    },
+    {
+      initialData: [],
+      refetchOnMount: true,
+    }
+  );
 
-  function handleNavigateToCarDetails() {
-    navigate("CarDetails" as never);
+  useRefreshOnFocus(refetch);
+
+  function handleNavigateToCarDetails(car: CarType) {
+    navigate(
+      "CarDetails" as never,
+      {
+        car,
+      } as never
+    );
   }
 
-  const car: CarType = {
-    brand: "audi",
-    id: "2",
-    name: "RS 5 Coupé",
-    rent: {
-      period: "Ao dia",
-      price: 120,
-    },
-    thumbnail: "https://www.pngmart.com/files/1/Audi.png",
-  };
+  function handleOpenMyCars() {
+    navigate("MyCars" as never);
+  }
 
   return (
     <Container>
@@ -34,23 +64,35 @@ export function Home({}: HomeProps) {
           <TotalCars>Total de 12 carros</TotalCars>
         </HeaderContent>
       </Header>
-      <CarList
-        data={[
-          car,
-          {
-            ...car,
-            id: "1",
-            thumbnail:
-              "https://www.pngarts.com/files/3/White-Audi-PNG-Background-Image.png",
-          },
-        ]}
-        keyExtractor={(item: CarType) => {
-          return item.id;
-        }}
-        renderItem={({ item: car }) => {
-          return <Car onPress={handleNavigateToCarDetails} data={car as CarType} />;
-        }}
-      />
+      {isFetching ? (
+        <Load />
+      ) : (
+        <CarList
+          data={cars}
+          keyExtractor={(item: CarType) => {
+            return item.id;
+          }}
+          renderItem={({ item: car }) => {
+            return (
+              <Car
+                onPress={() => {
+                  handleNavigateToCarDetails(car as CarType);
+                }}
+                data={car as CarType}
+              />
+            );
+          }}
+        />
+      )}
+
+      <MyCarsButton>
+        <Ionicons
+          onPress={handleOpenMyCars}
+          color={theme.colors.shape}
+          size={32}
+          name="ios-car-sport"
+        />
+      </MyCarsButton>
     </Container>
   );
 }

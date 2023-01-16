@@ -12,7 +12,6 @@ import {
   Rent,
   Period,
   Price,
-  About,
   Accessories,
   Footer,
   CalendarIcon,
@@ -20,12 +19,6 @@ import {
 import { ImageSlider } from "../../components/ImageSlider";
 import { Accessory } from "../../components/Accessory/index";
 
-import speedSvg from "../../assets/speed.svg";
-import accelerationSvg from "../../assets/acceleration.svg";
-import forceSvg from "../../assets/force.svg";
-import gasolineSvg from "../../assets/gasoline.svg";
-import exchangeSvg from "../../assets/exchange.svg";
-import peopleSvg from "../../assets/people.svg";
 import { Button } from "../../components/Button";
 import {
   RentalPeriod,
@@ -41,20 +34,91 @@ import {
 import { RFValue } from "react-native-responsive-fontsize";
 import { useTheme } from "styled-components/native";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { CarType } from "../../components/Car/index";
+import { getAccessoryIcon } from "../../utils/getAccessoryIcon";
+import { api } from "../../services/api";
+import { format } from "date-fns";
+import { getPlatformDate } from "../../utils/getPlatformDate";
+import { Alert } from "react-native";
+import { useState } from "react";
+
+export type UserSchedule = {
+  id?: number;
+  user_id: number;
+  car: CarType;
+  startDate: string;
+  endDate: string;
+};
 
 interface SchedulingDetailsProps {}
 
 export function SchedulingDetails({}: SchedulingDetailsProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
   const theme = useTheme();
   const { navigate } = useNavigation();
+  const route = useRoute();
+  const { car, dates } = route.params as {
+    car: CarType;
+    dates: string[];
+  };
+
+  const numberOfDatesInInterval = dates.length;
+  const formattedStartDate = format(getPlatformDate(new Date(dates[0])), "dd/MM/yyyy");
+  const formattedEndDate = format(
+    getPlatformDate(new Date(dates[dates.length - 1])),
+    "dd/MM/yyyy"
+  );
 
   function handleNavigateToScheduling() {
-    navigate("Scheduling" as never);
+    navigate(
+      "Scheduling" as never,
+      {
+        car,
+      } as never
+    );
   }
 
-  function handleNavigateToSchedulingComplete() {
-    navigate("SchedulingComplete" as never);
+  async function handleConfirmRental() {
+    setIsLoading(true);
+
+    const schedulesByCar = await api
+      .get(`/schedules_bycars/${car.id}`)
+      .then((res) => {
+        return res.data;
+      })
+      .catch(() => {
+        setIsLoading(false);
+        Alert.alert("Não foi possível confirmar o agendamento.");
+      });
+
+    const unavailableDates = [...schedulesByCar.unavailable_dates, ...dates];
+
+    api
+      .post("/schedules_byuser", {
+        user_id: 1,
+        car,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+      } as UserSchedule)
+      .catch(() => {
+        setIsLoading(false);
+        Alert.alert("Não foi possível confirmar o agendamento.");
+      });
+
+    api
+      .put(`/schedules_bycars/${car.id}`, {
+        id: car.id,
+        unavailable_dates: unavailableDates,
+      })
+      .then(() => {
+        navigate("SchedulingComplete" as never);
+      })
+      .catch(() => {
+        setIsLoading(false);
+        Alert.alert("Não foi possível confirmar o agendamento.");
+      });
   }
 
   return (
@@ -65,33 +129,26 @@ export function SchedulingDetails({}: SchedulingDetailsProps) {
       </Header>
 
       <CarImages>
-        <ImageSlider
-          imagesUrl={[
-            "https://www.pngarts.com/files/3/White-Audi-PNG-Background-Image.png",
-          ]}
-        />
+        <ImageSlider imagesUrl={car.photos} />
       </CarImages>
 
       <Content>
         <Details>
           <Description>
-            <Brand>Lamborghini</Brand>
-            <Name>Huracan</Name>
+            <Brand>{car.brand}</Brand>
+            <Name>{car.name}</Name>
           </Description>
 
           <Rent>
-            <Period>Ao dia</Period>
-            <Price>R$ 580</Price>
+            <Period>{car.rent.period}</Period>
+            <Price>R$ {car.rent.price}</Price>
           </Rent>
         </Details>
 
         <Accessories>
-          <Accessory name="300Hm/h" icon={speedSvg} />
-          <Accessory name="3.2s" icon={accelerationSvg} />
-          <Accessory name="800 HP" icon={forceSvg} />
-          <Accessory name="Gasolina" icon={gasolineSvg} />
-          <Accessory name="Auto" icon={exchangeSvg} />
-          <Accessory name="2 pessoas" icon={peopleSvg} />
+          {car.accessories.map(({ name, type }) => {
+            return <Accessory key={type} name={name} icon={getAccessoryIcon(type)} />;
+          })}
         </Accessories>
 
         <RentalPeriod>
@@ -101,24 +158,28 @@ export function SchedulingDetails({}: SchedulingDetailsProps) {
 
           <DateInfo>
             <DateTitle>DE</DateTitle>
-            <DateValue>02/02/2021</DateValue>
+            <DateValue>{formattedStartDate}</DateValue>
           </DateInfo>
 
           <Feather name="chevron-right" size={RFValue(10)} color={theme.colors.text} />
 
           <DateInfo>
             <DateTitle>ATÉ</DateTitle>
-            <DateValue>02/03/2021</DateValue>
+            <DateValue>{formattedEndDate}</DateValue>
           </DateInfo>
         </RentalPeriod>
 
         <RentalPrice>
           <RentalPriceDetails>
             <RentalPriceLabel>TOTAL</RentalPriceLabel>
-            <RentalPriceQuota>R$ 580 x3 diárias</RentalPriceQuota>
+            <RentalPriceQuota>
+              R$ {car.rent.price} x{numberOfDatesInInterval} diárias
+            </RentalPriceQuota>
           </RentalPriceDetails>
 
-          <RentalPriceTotal>R$ 1.740,00</RentalPriceTotal>
+          <RentalPriceTotal>
+            R$ {car.rent.price * numberOfDatesInInterval}
+          </RentalPriceTotal>
         </RentalPrice>
       </Content>
 
@@ -126,7 +187,8 @@ export function SchedulingDetails({}: SchedulingDetailsProps) {
         <Button
           color={theme.colors.success}
           title="Alugar agora"
-          onPress={handleNavigateToSchedulingComplete}
+          onPress={handleConfirmRental}
+          isLoading={isLoading}
         />
       </Footer>
     </Container>

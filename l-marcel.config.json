@@ -3,6 +3,9 @@
     "React Native",
     "Styled Components",
     "Eslint",
-    "Expo"
+    "Expo",
+    "JSON Server",
+    "React Query",
+    "Date FNS"
   ]
 }
