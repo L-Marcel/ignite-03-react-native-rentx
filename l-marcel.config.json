@@ -1,4 +1,8 @@
 {
+  "translatedDescription": "Um aplicativo mobile que permite ao usuário alugar um carro.",
+  "links": {
+    "figma": "https://www.figma.com/file/4ojyGi2mGuQaGK0sUHMAqB/RentX-Ignite?node-id=22%3A201&t=oB3MXwO3lxGi0GMb-1"
+  },
   "technologies": [
     "React Native",
     "Styled Components",
