@@ -16,6 +16,7 @@ import { OrientationLock } from "expo-screen-orientation/build/ScreenOrientation
 import { Routes } from "./src/routes/index";
 import { QueryClientProvider } from "react-query";
 import { queryClient } from "./src/services/query";
+import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,7 +37,7 @@ export default function App() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return null;
+    return <StatusBar style="light" />;
   }
 
   return (

@@ -6,6 +6,10 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "splash": {
+      "image": "./assets/splash-screen.png",
+      "backgroundColor": "#1B1B1F"
+    },
     "ios": {
       "requireFullScreen": true
     },
@@ -16,6 +20,15 @@
           "initialOrientation": "PORTRAIT"
         }
       ]
-    ]
+    ],
+    "androidNavigationBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#1b1b1f"
+    },
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    }
   }
 }

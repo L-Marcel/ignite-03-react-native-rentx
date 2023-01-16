@@ -17,6 +17,19 @@ import { useRefreshOnFocus } from "../../context/hooks/useRefreshOnFocus";
 import { Load } from "../../components/Load/index";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "styled-components/native";
+import { PanGestureHandler } from "react-native-gesture-handler";
+import { BackHandler, View } from "react-native";
+import { useEffect } from "react";
+import { LoadAnimation } from "../../components/LoadAnimation/index";
+
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedGestureHandler,
+  withSpring,
+} from "react-native-reanimated";
+
+const ButtonAnimated = Animated.createAnimatedComponent(MyCarsButton);
 
 interface HomeProps {}
 
@@ -42,6 +55,37 @@ export function Home({}: HomeProps) {
 
   useRefreshOnFocus(refetch);
 
+  const positionY = useSharedValue(0);
+  const positionX = useSharedValue(0);
+
+  const myCarsButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: positionX.value,
+        },
+        {
+          translateY: positionY.value,
+        },
+      ],
+    };
+  });
+
+  const onGestureEvent = useAnimatedGestureHandler({
+    onStart(_, ctx: any) {
+      ctx.positionX = positionX.value;
+      ctx.positionY = positionY.value;
+    },
+    onActive(event, ctx: any) {
+      positionX.value = ctx.positionX + event.translationX;
+      positionY.value = ctx.positionY + event.translationY;
+    },
+    onEnd() {
+      positionX.value = withSpring(0);
+      positionY.value = withSpring(0);
+    },
+  });
+
   function handleNavigateToCarDetails(car: CarType) {
     navigate(
       "CarDetails" as never,
@@ -55,17 +99,37 @@ export function Home({}: HomeProps) {
     navigate("MyCars" as never);
   }
 
+  const numberOfCars = cars.length;
+
+  useEffect(() => {
+    BackHandler.addEventListener("hardwareBackPress", () => {
+      return true;
+    });
+  }, []);
+
   return (
     <Container>
       <StatusBar translucent style="light" />
       <Header>
         <HeaderContent>
           <Logo width={RFValue(108)} height={RFValue(12)} />
-          <TotalCars>Total de 12 carros</TotalCars>
+          {isFetching ? (
+            <TotalCars>Carregando...</TotalCars>
+          ) : (
+            <TotalCars>Total de {numberOfCars} carros</TotalCars>
+          )}
         </HeaderContent>
       </Header>
       {isFetching ? (
-        <Load />
+        <View
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            flex: 1,
+          }}
+        >
+          <LoadAnimation duration={200} />
+        </View>
       ) : (
         <CarList
           data={cars}
@@ -85,14 +149,22 @@ export function Home({}: HomeProps) {
         />
       )}
 
-      <MyCarsButton>
-        <Ionicons
-          onPress={handleOpenMyCars}
-          color={theme.colors.shape}
-          size={32}
-          name="ios-car-sport"
-        />
-      </MyCarsButton>
+      <PanGestureHandler onGestureEvent={onGestureEvent}>
+        <Animated.View
+          style={[
+            myCarsButtonStyle,
+            {
+              position: "absolute",
+              bottom: 13,
+              right: 22,
+            },
+          ]}
+        >
+          <ButtonAnimated onPress={handleOpenMyCars}>
+            <Ionicons color={theme.colors.shape} size={32} name="ios-car-sport" />
+          </ButtonAnimated>
+        </Animated.View>
+      </PanGestureHandler>
     </Container>
   );
 }

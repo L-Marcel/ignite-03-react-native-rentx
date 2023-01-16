@@ -6,6 +6,7 @@
     "Expo",
     "JSON Server",
     "React Query",
-    "Date FNS"
+    "Date FNS",
+    "Reanimated"
   ]
 }

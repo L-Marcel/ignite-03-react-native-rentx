@@ -27,6 +27,7 @@ import {
   CarFooterPeriod,
   CarFooterDate,
 } from "./styles";
+import { LoadAnimation } from "../../components/LoadAnimation";
 
 interface MyCarsProps {}
 
@@ -81,7 +82,15 @@ export function MyCars({}: MyCarsProps) {
           )}
         </Appointments>
         {isFetching ? (
-          <Load />
+          <View
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+              flex: 1,
+            }}
+          >
+            <LoadAnimation duration={200} />
+          </View>
         ) : (
           <FlatList
             data={data}
